@@ -3,13 +3,11 @@ kaggleX = load('data/kaggle.X1.train.txt');
 kaggleY = load('data/kaggle.Y.train.txt');
 kaggleTestData = load('data/kaggle.X1.test.txt');
 normKaggle = normalizeData(kaggleX);
-
-%% Test on Full Set
-
+normTestData = normalizeData(kaggleTestData);
 %% Test on smaller set
 rand('state',0)
 
-nTruncated = 1000; % Number of data from the truncated set
+nTruncated = 60000; % Number of data from the truncated set
 indices = randi(length(normKaggle), nTruncated, 1);
 truncatedX = normKaggle(indices, :);
 truncatedY = kaggleY(indices, :);
@@ -17,17 +15,25 @@ truncatedY = kaggleY(indices, :);
 [xtr, xte, ytr, yte] = splitData(truncatedX, truncatedY, .75);
 
 %%
-nDivisions = 20;
+nDivisions = 19;
 
 MSE = zeros(nDivisions, 1);
-c = linspace(0, 1, nDivisions);
+c = linspace(.05, 1, nDivisions);
 for k = 1:nDivisions
-predictedKaggle = zeros(size(yte));
-for i = 1:size(xte, 1)
-    predictedKaggle(i) = lwrPredict(xtr, ytr, xte(i, :), c(k));
+    predictedKaggle = zeros(size(yte));
+    for i = 1:size(xte, 1)
+        predictedKaggle(i) = lwrPredict(xtr, ytr, xte(i, :), c(k));
+        predictedKaggle(i)
+    end
+    MSE(k) = mse(predictedKaggle, yte)
+    k
 end
-MSE(k) = mse(predictedKaggle, yte)
-k
+
+%% Cross-validate on full training set
+[xtr, xte, ytr, yte] = splitData(normKaggle, kaggleY, .75);
+
+for i = 1:size(xte, 1)
+    lwrPredict(xtr, ytr, xte(i, :), .25)
 end
 
 
@@ -35,7 +41,8 @@ end
 predictedKaggle = zeros(size(kaggleTestData, 1), 1);
 for i = 1:length(kaggleTestData)
     i
-    predictedKaggle(i) = lwrPredict(kaggleX, kaggleY, kaggleTestData(i,:), .25);
+    predictedKaggle(i) = lwrPredict(normKaggle, kaggleY, normTestData(i,:), .25);
+    predictedKaggle(i)
 end
 
 fh = fopen('predictions.csv','w');  % open file for upload
