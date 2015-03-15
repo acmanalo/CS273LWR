@@ -39,10 +39,11 @@ end
 
 %% Test on Full Set
 predictedKaggle = zeros(size(kaggleTestData, 1), 1);
-for i = 1:length(kaggleTestData)
+done = 0;
+parfor i = 1:length(kaggleTestData)
     i
+    done = done+1
     predictedKaggle(i) = lwrPredict(normKaggle, kaggleY, normTestData(i,:), .25);
-    predictedKaggle(i)
 end
 
 fh = fopen('predictions.csv','w');  % open file for upload
