@@ -7,7 +7,7 @@ normTestData = normalizeData(kaggleTestData);
 %% Test on smaller set
 rand('state',0)
 
-nTruncated = 60000; % Number of data from the truncated set
+nTruncated = 1000; % Number of data from the truncated set
 indices = randi(length(normKaggle), nTruncated, 1);
 truncatedX = normKaggle(indices, :);
 truncatedY = kaggleY(indices, :);
@@ -23,7 +23,6 @@ for k = 1:nDivisions
     predictedKaggle = zeros(size(yte));
     for i = 1:size(xte, 1)
         predictedKaggle(i) = lwrPredict(xtr, ytr, xte(i, :), c(k));
-        predictedKaggle(i)
     end
     MSE(k) = mse(predictedKaggle, yte)
     k
@@ -42,7 +41,6 @@ predictedKaggle = zeros(size(kaggleTestData, 1), 1);
 done = 0;
 parfor i = 1:length(kaggleTestData)
     i
-    done = done+1
     predictedKaggle(i) = lwrPredict(normKaggle, kaggleY, normTestData(i,:), .25);
 end
 
