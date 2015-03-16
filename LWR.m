@@ -1,7 +1,7 @@
 %% Load data
-kaggleX = load('data/kaggle.X1.train.txt');
-kaggleY = load('data/kaggle.Y.train.txt');
-kaggleTestData = load('data/kaggle.X1.test.txt');
+kaggleX = load('Data/kaggle.X1.train.txt');
+kaggleY = load('Data/kaggle.Y.train.txt');
+kaggleTestData = load('Data/kaggle.X1.test.txt');
 normKaggle = normalizeData(kaggleX);
 normTestData = normalizeData(kaggleTestData);
 %% Test on smaller set
@@ -38,11 +38,11 @@ end
 
 %% Test on Full Set
 predictedKaggle = zeros(size(kaggleTestData, 1), 1);
-done = 0;
 parfor i = 1:length(kaggleTestData)
     i
     predictedKaggle(i) = lwrPredict(normKaggle, kaggleY, normTestData(i,:), .25);
 end
+
 
 fh = fopen('predictions.csv','w');  % open file for upload
 fprintf(fh,'ID,Prediction\n');      % output header line
