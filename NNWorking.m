@@ -216,7 +216,7 @@ for i = 1:nModels
 end
 
 %% Examining varying batch sizes
-batchSizes = [100, 500, 1000, 2000, 5000, 10000];
+batchSizes = [1500, 3000, 5000];
 
 nModels = length(batchSizes);
 
