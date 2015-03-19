@@ -141,7 +141,7 @@ for i = 1:nFirstLayers
         end
     end
 end
-            
+
 %% Plot Results
 % Single Layer MSE plot
 xSingleLayer = [25:20:205];
@@ -151,7 +151,7 @@ plot(xSingleLayer, singleLayerMSEs)
 cc = hsv(size(multiLayerMSEs, 1));
 
 fig()
-hold on 
+hold on
 for i = 1:size(multiLayerMSEs, 1)
     plot([10:10:100], multiLayerMSEs(i, :), 'color', cc(i,:),...
         'DisplayName', ['Layer1 Nodes = ' num2str(i * 10)])
@@ -166,7 +166,7 @@ nodes = [5 30 55 80];
 for i = 1:4
     subplot(2,2,i)
     hold on
-
+    
     for j = 1:4
         plot(nodes, reshape(threeLayerMSEs(i, j, :), [4, 1]), 'color', cc(j, :),...
             'DisplayName', ['Layer2 Nodes = ' num2str(nodes(j))]);
@@ -174,3 +174,84 @@ for i = 1:4
     title(['Layer1 Nodes = ' num2str(nodes(i))])
     legend(gca, 'show')
 end
+
+%% Examining varying hidden node sizes
+hiddenNodesSizes = [5, 25, 50, 100, 150, 200, 300, 500];
+
+nModels = length(hiddenNodesSizes);
+
+varyingHiddenNodes1LayerMSEs = zeros(nModels, 1);
+
+for i = 1:nModels
+    nn = nnsetup([nInputs hiddenNodesSizes(i) 1]);
+    nn.output = 'linear';
+    nn.learningRate = .05;
+    opts = [];
+    opts.numepochs = 100;
+    opts.batchsize = 1000;
+    
+    [nn, L] = nntrain(nn, xtr, ytr, opts, xte, yte);
+    temp = nnff(nn, xte, zeros(size(xte, 1), 1));
+    yHat = temp.a{end};
+    
+    varyingHiddenNodes1LayerMSEs(i) = mse(yHat, yte);
+end
+
+varyingHiddenNodes2LayerMSEs = zeros(nModels, nModels);
+for i = 1:nModels
+    for j = 1:nModels
+        nn = nnsetup([nInputs hiddenNodesSizes(i) hiddenNodesSizes(j) 1]);
+        nn.output = 'linear';
+        nn.learningRate = .05;
+        opts = [];
+        opts.numepochs = 100;
+        opts.batchsize = 1000;
+        
+        [nn, L] = nntrain(nn, xtr, ytr, opts, xte, yte);
+        temp = nnff(nn, xte, zeros(size(xte, 1), 1));
+        yHat = temp.a{end};
+        
+        varyingHiddenNodes2LayerMSEs(i, j) = mse(yHat, yte);
+    end
+end
+
+%% Examining varying batch sizes
+batchSizes = [100, 500, 1000, 2000, 5000, 10000];
+
+nModels = length(batchSizes);
+
+varyingBatchSizes1LayerMSEs = zeros(nModels, 1);
+
+for i = 1:nModels
+    nn = nnsetup([nInputs 50 1]);
+    nn.output = 'linear';
+    nn.learningRate = .05;
+    opts = [];
+    opts.numepochs = 100;
+    opts.batchsize = batchSizes(i);
+    
+    [nn, L] = nntrain(nn, xtr, ytr, opts, xte, yte);
+    temp = nnff(nn, xte, zeros(size(xte, 1), 1));
+    yHat = temp.a{end};
+    
+    varyingBatchSizes1LayerMSEs(i) = mse(yHat, yte);
+end
+
+varyingBatchSizes2LayerMSEs = zeros(nModels, nModels);
+for i = 1:nModels
+    for j = 1:nModels
+        nn = nnsetup([nInputs 50 50 1]);
+        nn.output = 'linear';
+        nn.learningRate = .05;
+        opts = [];
+        opts.numepochs = 100;
+        opts.batchsize = batchSizes(i);
+        
+        [nn, L] = nntrain(nn, xtr, ytr, opts, xte, yte);
+        temp = nnff(nn, xte, zeros(size(xte, 1), 1));
+        yHat = temp.a{end};
+        
+        varyingBatchSizes2LayerMSEs(i, j) = mse(yHat, yte);
+    end
+end
+
