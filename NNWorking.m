@@ -314,7 +314,52 @@ ylabel('MSE')
 xlabel('Batch size')
 title('Effects of Batch Size on MSE')
 
+%% Plot Varying Hidden Node Sizes
+fig()
+plot(hiddenNodesSizes, varyingHiddenNodes1LayerMSEs)
+
+cc = hsv(length(hiddenNodesSizes));
+
+fig()
+hold on
+for i = 1:length(hiddenNodesSizes)
+    plot(hiddenNodesSizes, varyingHiddenNodes2LayerMSEs(i, :), ...
+        'color', cc(i,:), 'DisplayName', ['Layer1 Nodes = ' ...
+        num2str(hiddenNodesSizes(i))])
+end
+legend(gca, 'show')
+
 %% Ensembles of Neural Networks
+% Boostrapping
+[N, D] = size(xtr);
+
+Nbag = 25;          % Number of learners
+Nuse = N;           % Number of data from original set to use
+
+learners = cell(1, Nbag);
+
+% Create all the learners
+for i = 1:Nbag
+    randIndices = randi(Nuse, Nuse, 1);
+    xTrBagged = xtr(randIndices);
+    yTrBagged = ytr(randIndices);
+    
+    nn = nnsetup([nInputs 200 1]);
+    nn.output = 'linear';
+    nn.learningRate = .02;
+    opts = [];
+    opts.numepochs = 400;
+    opts.batchsize = 500;
+    
+    [nn, L] = nntrain(nn, xTrBagged, yTrBagged, opts, xte, yte);
+    learners{i} = nn;
+end
+
+
+
+
+
+
 
 
 
