@@ -174,7 +174,7 @@ for i = 1:4
 end
 
 %% Examining varying hidden node sizes
-hiddenNodesSizes = [5, 25, 50, 100, 150, 200, 300, 500];
+hiddenNodesSizes = [10, 25, 50, 100, 150, 300, 500];
 
 nModels = length(hiddenNodesSizes);
 
@@ -183,7 +183,7 @@ varyingHiddenNodes1LayerMSEs = zeros(nModels, 1);
 for i = 1:nModels
     nn = nnsetup([nInputs hiddenNodesSizes(i) 1]);
     nn.output = 'linear';
-    nn.learningRate = .05;
+    nn.learningRate = .01;
     opts = [];
     opts.numepochs = 100;
     opts.batchsize = 1000;
@@ -193,6 +193,7 @@ for i = 1:nModels
     yHat = temp.a{end};
     
     varyingHiddenNodes1LayerMSEs(i) = mse(yHat, yte);
+    fprintf('Model: %d\n\n', i)
 end
 
 varyingHiddenNodes2LayerMSEs = zeros(nModels, nModels);
@@ -210,6 +211,7 @@ for i = 1:nModels
         yHat = temp.a{end};
         
         varyingHiddenNodes2LayerMSEs(i, j) = mse(yHat, yte);
+        fprintf('Model: %d %d\n\n', i, j);
     end
 end
 
@@ -239,7 +241,6 @@ end
 
 varyingBatchSizes2LayerMSEs = zeros(nModels, 1);
 for i = 1:nModels
-    
     nn = nnsetup([nInputs 50 50 1]);
     nn.output = 'linear';
     nn.learningRate = .05;
@@ -251,22 +252,70 @@ for i = 1:nModels
     temp = nnff(nn, xte, zeros(size(xte, 1), 1));
     yHat = temp.a{end};
     
-    varyingBatchSizes2LayerMSEs(i, j) = mse(yHat, yte);
+    varyingBatchSizes2LayerMSEs(i) = mse(yHat, yte);
     sprintf('Model: %d', i)
 end
 
-%% Plot varying batch size results
-fig()
-plot(batchSizes, varyingBatchSizes1LayerMSEs)
+%% Varying the learning rate
+learningRates = [.01 .02 .04 .08 .16];
 
-%% Ensemble of neural nets
-fig()
-hold on
-for i = 1:length(batchSizes)
-    plot(batchSizes, varyingBatchSizes1LayerMSEs(i, :))
+nLearningRates = length(learningRates);
+varyingLearningRates1LayerMSEs = zeros(nLearningRates, 1);
+
+for i = 1:nLearningRates
+    nn = nnsetup([nInputs 50 1]);
+    nn.output = 'linear';
+    nn.learningRate = learningRates(i);
+    opts = [];
+    opts.numepochs = 100;
+    opts.batchsize = 1000;
+    
+    [nn, L] = nntrain(nn, xtr, ytr, opts, xte, yte);
+    temp = nnff(nn, xte, zeros(size(xte, 1), 1));
+    yHat = temp.a{end};
+    
+    varyingLearningRates1LayerMSEs(i) = mse(yHat, yte);
+    sprintf('Model: %d', i)
 end
 
-%% Feature Selection
+varyingLearningRates2LayerMSEs = zeros(nLearningRates, 1);
+for i = 1:nLearningRates
+    nn = nnsetup([nInputs 50 50 1]);
+    nn.output = 'linear';
+    nn.learningRate = learningRates(i);
+    opts = [];
+    opts.numepochs = 100;
+    opts.batchsize = 1000;
+    
+    [nn, L] = nntrain(nn, xtr, ytr, opts, xte, yte);
+    temp = nnff(nn, xte, zeros(size(xte, 1), 1));
+    yHat = temp.a{end};
+    
+    varyingLearningRates2LayerMSEs(i) = mse(yHat, yte);
+    sprintf('Model: %d', i)
+end
+
+%% Plot varying learning rate results
+% Learning rate of .16 resulted in diverging MSE
+fig()
+plot(learningRates(1:4), varyingLearningRates1LayerMSEs(1:4), learningRates(1:4), ...
+    varyingLearningRates2LayerMSEs(1:4));
+title('Effects of Learning Rates on MSE')
+ylabel('MSE')
+xlabel('Learning Rate')
+legend('1-Layer NN', '2-Layer NN')
+
+%% Plot varying batch size results
+fig()
+plot(batchSizes, varyingBatchSizes1LayerMSEs, batchSizes, ...
+    varyingBatchSizes2LayerMSEs)
+legend('1-Layer NN', '2-Layer NN')
+ylabel('MSE')
+xlabel('Batch size')
+title('Effects of Batch Size on MSE')
+
+%% Ensembles of Neural Networks
+
 
 
 
