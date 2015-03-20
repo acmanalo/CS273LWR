@@ -4,18 +4,17 @@ kaggleY = load('Data/kaggle.Y.train.txt');
 kaggleTestData = load('Data/kaggle.X1.test.txt');
 
 %% Normalize and split data
+rand('state', 0);
+
 [xNormalized, mu, sigma] = zscore(kaggleX);
 test_x = normalize(kaggleTestData, mu, sigma);
 
-[nTr, nInputs] = size(train_x);
+[nTr, nInputs] = size(xNormalized);
 [xtr, xte, ytr, yte] = splitData(xNormalized, kaggleY, .75);
 
-
 %% Sample
-rand('state', 0);
 
 nTe = size(kaggleTestData, 1);
-[nTr, nInputs] = size(train_x);
 H1 = 5;
 H2 = 10;
 
@@ -26,7 +25,6 @@ opts = [];
 opts.numepochs = 200;
 opts.batchsize = 1000;
 
-[xtr, xte, ytr, yte] = splitData(train_x, kaggleY, .75);
 [nn, L] = nntrain(nn, xtr, ytr, opts, xte, yte);
 tmp = nnff(nn, test_x, zeros(nTe, 1));
 yHat = tmp.a{end};
@@ -216,7 +214,7 @@ for i = 1:nModels
 end
 
 %% Examining varying batch sizes
-batchSizes = [1500, 3000, 5000];
+batchSizes = [100, 300, 500, 1000, 1500, 3000, 5000];
 
 nModels = length(batchSizes);
 
@@ -235,23 +233,41 @@ for i = 1:nModels
     yHat = temp.a{end};
     
     varyingBatchSizes1LayerMSEs(i) = mse(yHat, yte);
+    
+    sprintf('Model: %d', i)
 end
 
-varyingBatchSizes2LayerMSEs = zeros(nModels, nModels);
+varyingBatchSizes2LayerMSEs = zeros(nModels, 1);
 for i = 1:nModels
-    for j = 1:nModels
-        nn = nnsetup([nInputs 50 50 1]);
-        nn.output = 'linear';
-        nn.learningRate = .05;
-        opts = [];
-        opts.numepochs = 100;
-        opts.batchsize = batchSizes(i);
-        
-        [nn, L] = nntrain(nn, xtr, ytr, opts, xte, yte);
-        temp = nnff(nn, xte, zeros(size(xte, 1), 1));
-        yHat = temp.a{end};
-        
-        varyingBatchSizes2LayerMSEs(i, j) = mse(yHat, yte);
-    end
+    
+    nn = nnsetup([nInputs 50 50 1]);
+    nn.output = 'linear';
+    nn.learningRate = .05;
+    opts = [];
+    opts.numepochs = 100;
+    opts.batchsize = batchSizes(i);
+    
+    [nn, L] = nntrain(nn, xtr, ytr, opts, xte, yte);
+    temp = nnff(nn, xte, zeros(size(xte, 1), 1));
+    yHat = temp.a{end};
+    
+    varyingBatchSizes2LayerMSEs(i, j) = mse(yHat, yte);
+    sprintf('Model: %d', i)
 end
+
+%% Plot varying batch size results
+fig()
+plot(batchSizes, varyingBatchSizes1LayerMSEs)
+
+%% Ensemble of neural nets
+fig()
+hold on
+for i = 1:length(batchSizes)
+    plot(batchSizes, varyingBatchSizes1LayerMSEs(i, :))
+end
+
+%% Feature Selection
+
+
+
 
